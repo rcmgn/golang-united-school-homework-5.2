@@ -14,6 +14,13 @@ func NewCache() Cache {
 }
 
 func (c *Cache) Get(key string) (result string, isExist bool) {
+	if v, ok := c.time[key]; ok {
+		if v.After(time.Now()) {
+			delete(c.time, key)
+			delete(c.data, key)
+			return "", false
+		}
+	}
 	result, isExist = c.data[key]
 	return
 }
@@ -23,8 +30,16 @@ func (c *Cache) Put(key, value string) {
 }
 
 func (c *Cache) Keys() (result []string) {
-	for k, _ := range c.data {
-		result = append(result, k)
+	for key, _ := range c.data {
+		if v, ok := c.time[key]; ok {
+			if v.After(time.Now()) {
+				delete(c.time, key)
+				delete(c.data, key)
+				continue
+			}
+		}
+		result = append(result, key)
+		//}
 	}
 	return
 }
